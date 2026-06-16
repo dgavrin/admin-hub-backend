@@ -1,16 +1,15 @@
 info:
-  name: register
+  name: login
   type: http
-  seq: 1
+  seq: 2
 
 http:
   method: POST
-  url: "{{BASE_URL}}/auth/register"
+  url: "{{BASE_URL}}/auth/login"
   body:
     type: json
     data: |-
       {
-        "name": "denis",
         "email": "test@test.test",
         "password": "password"
       }

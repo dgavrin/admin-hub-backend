@@ -1,19 +1,18 @@
 info:
-  name: register
+  name: unblock
   type: http
-  seq: 1
+  seq: 3
 
 http:
   method: POST
-  url: "{{BASE_URL}}/auth/register"
+  url: "{{BASE_URL}}/users/unblock"
   body:
     type: json
     data: |-
       {
-        "name": "denis",
-        "email": "test@test.test",
-        "password": "password"
+        "ids": ["5a4e3808-a0f2-4548-a297-306bfa52856e"]
       }
+  auth: inherit
 
 settings:
   encodeUrl: true
