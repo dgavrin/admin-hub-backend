@@ -1,39 +1,58 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, User } from 'generated/prisma/client';
+import { UserStatus } from 'generated/prisma/client';
 import { PrismaService } from 'src/core/prisma/prisma.service';
+import { BulkIdsDto } from './dto/bulk-ids.dto';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  public async findUser(
-    UserWhereUniqueInput: Prisma.UserWhereUniqueInput,
-  ): Promise<User | null> {
-    return await this.prisma.user.findUnique({ where: UserWhereUniqueInput });
+  public async findAll() {
+    return await this.prisma.user.findMany({
+      orderBy: { lastLoginAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        status: true,
+        lastLoginAt: true,
+        createdAt: true,
+      },
+    });
   }
 
-  public async getUsers(params: {
-    skip?: number;
-    take?: number;
-    cursor?: Prisma.UserWhereUniqueInput;
-    where?: Prisma.UserWhereInput;
-    orderBy?: Prisma.UserOrderByWithRelationInput;
-  }): Promise<User[]> {
-    return await this.prisma.user.findMany({ ...params });
+  public async bulkBlock(bulkIdsDto: BulkIdsDto) {
+    return this.prisma.user
+      .updateMany({
+        where: { id: { in: bulkIdsDto.ids } },
+        data: { status: UserStatus.BLOCKED },
+      })
+      .then((result) => ({
+        success: result.count,
+        failed: bulkIdsDto.ids.length - result.count,
+      }));
   }
 
-  public async createUser(data: Prisma.UserCreateInput): Promise<User> {
-    return await this.prisma.user.create({ data });
+  public async bulkUnblock(bulkIdsDto: BulkIdsDto) {
+    return this.prisma.user
+      .updateMany({
+        where: { id: { in: bulkIdsDto.ids } },
+        data: { status: UserStatus.ACTIVE },
+      })
+      .then((result) => ({
+        success: result.count,
+        failed: bulkIdsDto.ids.length - result.count,
+      }));
   }
 
-  public async updateUser(params: {
-    where: Prisma.UserWhereUniqueInput;
-    data: Prisma.UserUpdateInput;
-  }): Promise<User> {
-    return await this.prisma.user.update(params);
-  }
-
-  public async deleteUser(where: Prisma.UserWhereUniqueInput): Promise<User> {
-    return await this.prisma.user.delete({ where });
+  public async bulkDelete(bulkIdsDto: BulkIdsDto) {
+    return this.prisma.user
+      .deleteMany({
+        where: { id: { in: bulkIdsDto.ids } },
+      })
+      .then((result) => ({
+        success: result.count,
+        failed: bulkIdsDto.ids.length - result.count,
+      }));
   }
 }
