@@ -8,9 +8,9 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { BulkIdsDto } from './dto/bulk-ids.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { BulkIdsDto } from './dto/bulk-ids.dto';
+import { UsersService } from './users.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -39,5 +39,11 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   public async bulkDelete(@Body() dto: BulkIdsDto) {
     return await this.usersService.bulkDelete(dto);
+  }
+
+  @Delete('unverified')
+  @HttpCode(HttpStatus.OK)
+  public async deleteUnverifiedUsers() {
+    return await this.usersService.deleteUnverified();
   }
 }

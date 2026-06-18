@@ -55,4 +55,14 @@ export class UsersService {
         failed: bulkIdsDto.ids.length - result.count,
       }));
   }
+
+  public async deleteUnverified() {
+    return this.prisma.user
+      .deleteMany({
+        where: { status: UserStatus.UNVERIFIED },
+      })
+      .then((result) => ({
+        success: result.count,
+      }));
+  }
 }
