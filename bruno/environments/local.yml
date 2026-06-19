@@ -1,0 +1,8 @@
+name: local
+variables:
+  - name: BASE_URL
+    value: http://localhost:3001/api
+  - name: TOKEN
+    value: ""
+  - secret: true
+    name: auth_token

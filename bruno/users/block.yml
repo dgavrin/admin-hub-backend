@@ -1,0 +1,21 @@
+info:
+  name: block
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{BASE_URL}}/users/block"
+  body:
+    type: json
+    data: |-
+      {
+        "ids": ["5a4e3808-a0f2-4548-a297-306bfa52856e"]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

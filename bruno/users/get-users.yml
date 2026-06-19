@@ -1,0 +1,32 @@
+info:
+  name: get-users
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{BASE_URL}}/users?page=1&limit=20&sortBy=lastLoginAt&sortOrder=desc"
+  params:
+    - name: page
+      value: "1"
+      type: query
+    - name: limit
+      value: "20"
+      type: query
+    - name: sortBy
+      value: lastLoginAt
+      type: query
+    - name: sortOrder
+      value: desc
+      type: query
+    - name: search
+      value: Test
+      type: query
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
