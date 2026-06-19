@@ -11,6 +11,7 @@ import { randomUUID } from 'crypto';
 import { Prisma, UserStatus } from 'generated/prisma/client';
 import { ConfigService } from 'src/core/config/config.service';
 import { PrismaService } from 'src/core/prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -20,6 +21,7 @@ export class AuthService {
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
   ) {}
 
   public async register(
@@ -54,7 +56,13 @@ export class AuthService {
       throw error;
     }
 
-    // TODO: Send verification email
+    setImmediate(() => {
+      this.emailService
+        .sendVerificationEmail(registerDto.email, verificationToken)
+        .catch((error) => {
+          console.error('Failed to send verification email:', error);
+        });
+    });
 
     return {
       message:
@@ -129,6 +137,16 @@ export class AuthService {
         where: { id: user.id },
         data: {
           status: UserStatus.ACTIVE,
+        },
+      });
+    } else if (
+      user.status === UserStatus.BLOCKED &&
+      user.statusBeforeBlock === UserStatus.UNVERIFIED
+    ) {
+      await this.prismaService.user.update({
+        where: { id: user.id },
+        data: {
+          statusBeforeBlock: UserStatus.ACTIVE,
         },
       });
     }
