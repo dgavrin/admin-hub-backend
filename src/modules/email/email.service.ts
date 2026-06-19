@@ -1,42 +1,46 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from 'src/core/config/config.service';
-import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private readonly transporter: nodemailer.Transporter;
-
-  constructor(private readonly configService: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: this.configService.gmailUser,
-        pass: this.configService.gmailAppPassword,
-      },
-    });
-  }
+  constructor(private readonly configService: ConfigService) {}
 
   public async sendVerificationEmail(email: string, verificationToken: string) {
-    const fromName = this.configService.mailFromName;
     const verificationUrl =
       `${this.configService.clientUrl}/api/auth/verify-email` +
       `?token=${encodeURIComponent(verificationToken)}`;
 
-    const mail = {
-      from: `"${fromName}" <${this.configService.gmailUser}>`,
-      to: email,
-      subject: 'Verify your email',
-      html: `
-        <p>Welcome to Admin Hub.</p>
-        <p>Please verify your email by clicking the link below:</p>
-        <p><a href="${verificationUrl}">${verificationUrl}</a></p>
-      `,
-      text: `Verify your email: ${verificationUrl}`,
-    };
-
     try {
-      await this.transporter.sendMail(mail);
+      const response = await fetch(
+        `${this.configService.clientUrl}/api/auth/send-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, verificationUrl }),
+        },
+      );
+
+      let responseBody: { success?: boolean; message?: string } | null = null;
+      try {
+        responseBody = (await response.json()) as {
+          success?: boolean;
+          message?: string;
+        };
+      } catch {
+        responseBody = null;
+      }
+
+      const isSuccessful = response.ok && responseBody?.success !== false;
+      if (!isSuccessful) {
+        throw new Error(
+          responseBody?.message ??
+            `Email gateway returned status ${response.status}`,
+        );
+      }
+
       this.logger.log(`Verification email sent to ${email}`);
     } catch (error) {
       this.logger.error(
