@@ -53,27 +53,65 @@ export class UsersService {
   }
 
   public async bulkBlock(bulkIdsDto: BulkIdsDto) {
-    return this.prisma.user
-      .updateMany({
-        where: { id: { in: bulkIdsDto.ids } },
-        data: { status: UserStatus.BLOCKED },
-      })
-      .then((result) => ({
-        success: result.count,
-        failed: bulkIdsDto.ids.length - result.count,
-      }));
+    const [active, unverified] = await this.prisma.$transaction([
+      this.prisma.user.updateMany({
+        where: { id: { in: bulkIdsDto.ids }, status: UserStatus.ACTIVE },
+        data: {
+          status: UserStatus.BLOCKED,
+          statusBeforeBlock: UserStatus.ACTIVE,
+        },
+      }),
+      this.prisma.user.updateMany({
+        where: { id: { in: bulkIdsDto.ids }, status: UserStatus.UNVERIFIED },
+        data: {
+          status: UserStatus.BLOCKED,
+          statusBeforeBlock: UserStatus.UNVERIFIED,
+        },
+      }),
+    ]);
+
+    const success = active.count + unverified.count;
+    const failed = bulkIdsDto.ids.length - success;
+
+    return {
+      success,
+      failed,
+    };
   }
 
   public async bulkUnblock(bulkIdsDto: BulkIdsDto) {
-    return this.prisma.user
-      .updateMany({
-        where: { id: { in: bulkIdsDto.ids } },
-        data: { status: UserStatus.ACTIVE },
-      })
-      .then((result) => ({
-        success: result.count,
-        failed: bulkIdsDto.ids.length - result.count,
-      }));
+    const [active, unverified] = await this.prisma.$transaction([
+      this.prisma.user.updateMany({
+        where: {
+          id: { in: bulkIdsDto.ids },
+          status: UserStatus.BLOCKED,
+          statusBeforeBlock: UserStatus.ACTIVE,
+        },
+        data: {
+          status: UserStatus.ACTIVE,
+          statusBeforeBlock: null,
+        },
+      }),
+      this.prisma.user.updateMany({
+        where: {
+          id: { in: bulkIdsDto.ids },
+          status: UserStatus.BLOCKED,
+          statusBeforeBlock: UserStatus.UNVERIFIED,
+        },
+        data: {
+          status: UserStatus.UNVERIFIED,
+          statusBeforeBlock: null,
+        },
+      }),
+    ]);
+
+    const success = active.count + unverified.count;
+    const failed = bulkIdsDto.ids.length - success;
+
+    return {
+      success,
+      failed,
+    };
   }
 
   public async bulkDelete(bulkIdsDto: BulkIdsDto) {

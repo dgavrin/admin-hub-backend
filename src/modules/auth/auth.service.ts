@@ -139,6 +139,16 @@ export class AuthService {
           status: UserStatus.ACTIVE,
         },
       });
+    } else if (
+      user.status === UserStatus.BLOCKED &&
+      user.statusBeforeBlock === UserStatus.UNVERIFIED
+    ) {
+      await this.prismaService.user.update({
+        where: { id: user.id },
+        data: {
+          statusBeforeBlock: UserStatus.ACTIVE,
+        },
+      });
     }
 
     return { message: 'Email verified successfully' };
