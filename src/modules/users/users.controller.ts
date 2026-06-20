@@ -6,13 +6,11 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { BulkIdsDto } from './dto/bulk-ids.dto';
 import { UsersService } from './users.service';
-import { FindUsersQueryDto } from './dto/find-users-query.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -21,8 +19,8 @@ export class UsersController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  public async findAll(@Query() query: FindUsersQueryDto) {
-    return await this.usersService.findAll(query);
+  public async findAll() {
+    return await this.usersService.findAll();
   }
 
   @Post('block')
